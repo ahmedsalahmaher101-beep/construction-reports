@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نافذة المهندس v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#0d1b2a; --sur:#132233; --card:#1a2e42; --bord:rgba(255,255,255,0.08);
+  --acc:#f59e0b; --acc2:#fbbf24; --blue:#3b82f6; --green:#10b981; --red:#ef4444;
+  --txt:#e8f0f8; --mut:#6b8aaa; --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;}
+
+/* ── LOGIN ── */
+#screen-login{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(245,158,11,.12) 0%,transparent 60%),var(--bg);}
+.login-box{background:var(--card);border:1px solid rgba(245,158,11,.2);border-radius:20px;
+  padding:40px 34px;width:100%;max-width:380px;box-shadow:0 24px 60px rgba(0,0,0,.5);}
+.l-logo{text-align:center;margin-bottom:28px;}
+.l-ico{width:64px;height:64px;background:linear-gradient(135deg,#f59e0b,#fbbf24);border-radius:16px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:12px;
+  box-shadow:0 6px 24px rgba(245,158,11,.3);}
+.l-logo h1{font-family:'Tajawal',sans-serif;font-size:1.4rem;font-weight:900;}
+.l-logo p{color:var(--mut);font-size:.82rem;margin-top:3px;}
+.fld{margin-bottom:14px;}
+.fld label{display:block;font-size:.78rem;color:var(--mut);font-weight:600;margin-bottom:5px;}
+.fld input,.fld select{width:100%;background:var(--sur);border:1.5px solid var(--bord);border-radius:9px;
+  color:var(--txt);font-family:'Cairo',sans-serif;font-size:.9rem;padding:10px 13px;outline:none;transition:border-color .2s;}
+.fld input:focus,.fld select:focus{border-color:var(--acc);}
+.fld select option{background:var(--sur);}
+.btn-login{width:100%;padding:12px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#000;
+  font-family:'Cairo',sans-serif;font-size:.95rem;font-weight:800;border:none;border-radius:10px;
+  cursor:pointer;margin-top:6px;box-shadow:0 4px 16px rgba(245,158,11,.3);transition:all .2s;}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(245,158,11,.4);}
+
+/* ── APP ── */
+#screen-app{display:none;}
+.topbar{height:58px;background:var(--sur);border-bottom:1px solid var(--bord);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px;
+  position:sticky;top:0;z-index:50;}
+.tb-l{display:flex;align-items:center;gap:10px;}
+.tb-ico{width:34px;height:34px;background:linear-gradient(135deg,#f59e0b,#fbbf24);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:15px;}
+.tb-title{font-family:'Tajawal',sans-serif;font-weight:900;font-size:.95rem;}
+.tb-proj{font-size:.75rem;color:var(--acc2);background:rgba(245,158,11,.1);border-radius:5px;padding:2px 9px;font-weight:700;}
+.tb-r{display:flex;align-items:center;gap:8px;}
+.tb-name{font-size:.82rem;color:var(--mut);}
+.btn-sm{padding:5px 13px;border-radius:7px;font-family:'Cairo',sans-serif;font-size:.78rem;font-weight:700;
+  border:none;cursor:pointer;transition:all .2s;}
+.btn-out{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red);}
+.btn-out:hover{background:rgba(239,68,68,.2);}
+.btn-adm{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--acc2);}
+.btn-adm:hover{background:rgba(245,158,11,.2);}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--sur);border-bottom:1px solid var(--bord);}
+.tab{flex:1;padding:14px;text-align:center;cursor:pointer;font-weight:700;font-size:.88rem;
+  color:var(--mut);border-bottom:3px solid transparent;transition:all .2s;display:flex;
+  align-items:center;justify-content:center;gap:7px;}
+.tab.active{color:var(--acc2);border-bottom-color:var(--acc);}
+
+/* ── CONTENT ── */
+.content{max-width:780px;margin:0 auto;padding:24px 18px 60px;}
+.pane{display:none;} .pane.active{display:block;}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.card-h{padding:13px 18px;border-bottom:1px solid var(--bord);font-size:.85rem;font-weight:700;
+  color:var(--acc2);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.card-b{padding:18px;}
+.sec-title{display:flex;align-items:center;gap:9px;margin-bottom:20px;}
+.sec-ico{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+.sec-title h2{font-family:'Tajawal',sans-serif;font-size:1.25rem;font-weight:900;}
+.sec-title p{font-size:.78rem;color:var(--mut);margin-top:2px;}
+
+/* ── FORM ── */
+.fg{margin-bottom:12px;}
+.fg label{display:block;font-size:.76rem;color:var(--mut);font-weight:600;margin-bottom:5px;}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--sur);border:1.5px solid var(--bord);
+  border-radius:8px;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.86rem;
+  padding:9px 12px;outline:none;transition:border-color .2s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--acc);}
+.fg select option{background:var(--sur);}
+.fg textarea{resize:vertical;min-height:76px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.span2{grid-column:span 2;}
+
+/* ── DYNAMIC FIELDS ── */
+.dyn-field{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:10px 13px;
+  background:var(--sur);border:1px solid var(--bord);border-radius:8px;}
+.dyn-field .dyn-lbl{flex:1;font-size:.88rem;}
+.dyn-field .dyn-input{flex:2;}
+.dyn-field .dyn-input input,.dyn-field .dyn-input select,.dyn-field .dyn-input textarea{
+  width:100%;background:var(--card);border:1px solid var(--bord);border-radius:7px;
+  color:var(--txt);font-family:'Cairo',sans-serif;font-size:.86rem;padding:7px 10px;outline:none;}
+.dyn-field .dyn-input input:focus,.dyn-field .dyn-input select:focus{border-color:var(--acc);}
+
+/* ── ITEMS LIST (daily) ── */
+.item-row{display:grid;grid-template-columns:1fr 110px 34px;gap:8px;margin-bottom:7px;align-items:center;}
+.item-row input,.item-row select{background:var(--sur);border:1px solid var(--bord);border-radius:7px;
+  color:var(--txt);font-family:'Cairo',sans-serif;font-size:.84rem;padding:7px 10px;outline:none;width:100%;}
+.item-row input:focus,.item-row select:focus{border-color:var(--acc);}
+
+/* ── WEEKLY TABLE ── */
+.wtable{width:100%;border-collapse:collapse;}
+.wtable th{background:var(--sur);padding:10px 14px;font-size:.78rem;font-weight:700;color:var(--mut);
+  text-align:right;border-bottom:1px solid var(--bord);}
+.wtable td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.wtable tr:last-child td{border-bottom:none;}
+.wtable input[type=text]{width:100%;background:var(--sur);border:1px solid var(--bord);border-radius:7px;
+  color:var(--txt);font-family:'Cairo',sans-serif;font-size:.84rem;padding:6px 10px;outline:none;}
+.wtable input[type=number]{width:68px;background:var(--sur);border:1px solid var(--bord);border-radius:7px;
+  color:var(--txt);font-family:'Cairo',sans-serif;font-size:.84rem;padding:6px 8px;outline:none;text-align:center;}
+.wtable input:focus{border-color:var(--acc);}
+.pct-bar{height:5px;background:rgba(255,255,255,.08);border-radius:3px;margin-top:4px;}
+.pct-fill{height:5px;border-radius:3px;background:var(--acc);transition:width .3s;}
+.pct-fill.g{background:var(--green);}
+.wtable-wrap{overflow-x:auto;}
+.overall-pct{display:flex;align-items:center;gap:12px;padding:14px 18px;background:rgba(245,158,11,.07);
+  border-top:1px solid var(--bord);}
+.overall-pct label{font-size:.82rem;color:var(--mut);font-weight:700;white-space:nowrap;}
+.overall-pct input[type=range]{flex:1;accent-color:var(--acc);}
+.overall-pct .pct-val{font-family:'Tajawal',sans-serif;font-size:1.3rem;font-weight:900;color:var(--acc2);min-width:46px;text-align:center;}
+.overall-pct input[type=number]{width:64px;background:var(--sur);border:1px solid var(--bord);border-radius:7px;
+  color:var(--acc2);font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:800;padding:5px 8px;outline:none;text-align:center;}
+
+/* ── PHOTO ── */
+.photo-zone{border:2px dashed var(--bord);border-radius:9px;padding:22px;text-align:center;
+  cursor:pointer;position:relative;transition:border-color .2s;}
+.photo-zone:hover{border-color:var(--acc);}
+.photo-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.photo-zone p{font-size:.8rem;color:var(--mut);margin-top:6px;}
+.thumbs{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+.thumb{width:64px;height:64px;border-radius:7px;overflow:hidden;border:1px solid var(--bord);}
+.thumb img{width:100%;height:100%;object-fit:cover;}
+
+/* ── BUTTONS ── */
+.btn{padding:9px 20px;border-radius:9px;font-family:'Cairo',sans-serif;font-size:.86rem;font-weight:700;
+  border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-prim{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#000;box-shadow:0 3px 12px rgba(245,158,11,.25);}
+.btn-prim:hover{box-shadow:0 5px 18px rgba(245,158,11,.4);transform:translateY(-1px);}
+.btn-prim:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.btn-ghost{background:var(--sur);border:1px solid var(--bord);color:var(--mut);}
+.btn-ghost:hover{border-color:var(--acc);color:var(--acc2);}
+.add-btn{background:none;border:1px dashed var(--bord);color:var(--mut);border-radius:7px;
+  font-family:'Cairo',sans-serif;font-size:.8rem;padding:6px 14px;cursor:pointer;transition:all .2s;margin-top:4px;}
+.add-btn:hover{border-color:var(--acc);color:var(--acc2);}
+.del-btn{width:30px;height:30px;background:rgba(239,68,68,.08);border:none;border-radius:7px;
+  color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:background .2s;}
+.del-btn:hover{background:rgba(239,68,68,.2);}
+.sub-bar{display:flex;justify-content:flex-end;gap:10px;margin-top:10px;}
+
+/* ── MY REPORTS ── */
+.rep-card{background:var(--card);border:1px solid var(--bord);border-radius:11px;padding:14px 16px;
+  margin-bottom:9px;display:flex;align-items:center;gap:12px;animation:fi .3s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.rep-badge{padding:4px 11px;border-radius:20px;font-size:.72rem;font-weight:800;flex-shrink:0;}
+.bd{background:rgba(59,130,246,.15);color:#60a5fa;}
+.bw{background:rgba(245,158,11,.15);color:var(--acc2);}
+.rep-info{flex:1;}
+.rep-info .rt{font-size:.88rem;font-weight:700;}
+.rep-info .rs{font-size:.76rem;color:var(--mut);margin-top:2px;}
+.rep-del{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);color:var(--red);
+  border-radius:6px;padding:4px 10px;font-family:'Cairo',sans-serif;font-size:.75rem;cursor:pointer;transition:background .2s;}
+.rep-del:hover{background:rgba(239,68,68,.18);}
+
+/* ── ADMIN MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;
+  align-items:center;justify-content:center;padding:16px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--card);border:1px solid var(--bord);border-radius:18px;width:100%;
+  max-width:640px;max-height:90vh;overflow-y:auto;padding:28px;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;
+  padding-bottom:14px;border-bottom:1px solid var(--bord);}
+.modal-head h3{font-family:'Tajawal',sans-serif;font-size:1.15rem;font-weight:900;}
+.modal-close{width:30px;height:30px;background:var(--sur);border:none;border-radius:7px;
+  color:var(--mut);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{color:var(--txt);}
+
+/* admin tabs */
+.adm-tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
+.adm-tab{padding:7px 16px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:.82rem;
+  font-weight:700;cursor:pointer;border:1px solid var(--bord);color:var(--mut);background:var(--sur);transition:all .2s;}
+.adm-tab.active{background:rgba(245,158,11,.12);border-color:var(--acc);color:var(--acc2);}
+
+/* project cards in admin */
+.proj-adm-card{background:var(--sur);border:1px solid var(--bord);border-radius:10px;padding:14px 16px;margin-bottom:10px;}
+.proj-adm-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.proj-adm-top input{flex:1;background:var(--card);border:1px solid var(--bord);border-radius:7px;
+  color:var(--txt);font-family:'Cairo',sans-serif;font-size:.88rem;padding:7px 11px;outline:none;}
+.proj-adm-top input:focus{border-color:var(--acc);}
+.work-type-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.wt-btn{padding:5px 12px;border-radius:6px;font-family:'Cairo',sans-serif;font-size:.76rem;font-weight:700;
+  cursor:pointer;border:1px solid var(--bord);color:var(--mut);background:var(--card);transition:all .2s;}
+.wt-btn.active-s{background:rgba(26,58,92,.4);border-color:#4da6ff;color:#4da6ff;}
+.wt-btn.active-f{background:rgba(45,90,61,.4);border-color:#4ade80;color:#4ade80;}
+.wt-btn.active-b{background:rgba(245,158,11,.1);border-color:var(--acc);color:var(--acc2);}
+
+/* field builder in admin */
+.field-builder-row{display:grid;grid-template-columns:1fr 100px 80px 34px;gap:8px;margin-bottom:7px;align-items:center;}
+.field-builder-row input,.field-builder-row select{background:var(--card);border:1px solid var(--bord);
+  border-radius:7px;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.82rem;padding:7px 10px;outline:none;width:100%;}
+.field-builder-row input:focus,.field-builder-row select:focus{border-color:var(--acc);}
+.toggle-btn{padding:5px 10px;border-radius:6px;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:700;
+  cursor:pointer;border:1px solid;transition:all .2s;}
+.toggle-on{background:rgba(16,185,129,.1);border-color:var(--green);color:var(--green);}
+.toggle-off{background:rgba(239,68,68,.1);border-color:var(--red);color:var(--red);}
+
+/* pass change */
+.pass-row{display:flex;gap:10px;align-items:flex-end;}
+.pass-row .fld{flex:1;margin-bottom:0;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--green);color:#fff;padding:11px 24px;border-radius:11px;font-weight:700;
+  font-size:.88rem;box-shadow:0 6px 24px rgba(0,0,0,.4);z-index:999;transition:transform .3s ease;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.err{background:var(--red);}
+
+.empty{text-align:center;padding:44px 16px;color:var(--mut);}
+.empty .ei{font-size:42px;opacity:.35;margin-bottom:8px;}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(0,0,0,.2);
+  border-top-color:#000;border-radius:50%;animation:sp .6s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── PRINT ── */
+@media print{
+  @page{size:A4;margin:14mm 14mm 16mm;}
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  body{background:white !important;color:#1a1a2e !important;font-family:'Cairo',sans-serif;}
+  #screen-login,#screen-app .topbar,#screen-app .tabs,
+  .sub-bar,.add-btn,.del-btn,.btn-ghost,#pane-mine,.modal-bg{display:none !important;}
+  #screen-app{display:block !important;}
+  .content{padding:0 !important;max-width:100% !important;}
+  .pane{display:none !important;}
+  .pane.print-active{display:block !important;}
+  .card{background:white !important;border:1px solid #ddd !important;border-radius:8px !important;margin-bottom:14px !important;}
+  .card-h{background:#f5f5f5 !important;color:#1a1a2e !important;border-bottom:1px solid #ddd !important;}
+  .dyn-field{background:#f9f9f9 !important;border:1px solid #eee !important;}
+  .dyn-field .dyn-lbl{color:#555 !important;}
+  .dyn-field .dyn-input input,.dyn-field .dyn-input select,.dyn-field .dyn-input textarea{
+    background:white !important;border:1px solid #ddd !important;color:#1a1a2e !important;}
+  .item-row input,.item-row select{background:white !important;border:none !important;color:#1a1a2e !important;font-size:.85rem;}
+  .wtable{border:1px solid #ddd !important;}
+  .wtable th{background:#eee !important;color:#555 !important;border-bottom:1px solid #ddd !important;}
+  .wtable td{color:#1a1a2e !important;border-bottom:1px solid #f0f0f0 !important;}
+  .wtable input[type=text],.wtable input[type=number]{background:white !important;border:none !important;color:#1a1a2e !important;}
+  .pct-bar{background:#e0e0e0 !important;}
+  .pct-fill{background:#1a3a5c !important;}
+  .overall-pct{background:#f5f5f5 !important;border-top:1px solid #ddd !important;}
+  .overall-pct label,.overall-pct .pct-val{color:#1a1a2e !important;}
+  .overall-pct input[type=range]{display:none !important;}
+  .print-header{display:block !important;}
+  .form-grid{grid-template-columns:1fr 1fr !important;}
+  .sec-title h2{color:#1a1a2e !important;}
+  .sec-title p{color:#555 !important;}
+}
+
+/* print header (hidden on screen) */
+.print-header{display:none;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #1a3a5c;}
+.print-header h1{font-family:'Tajawal',sans-serif;font-size:1.3rem;color:#1a3a5c;}
+.print-header .ph-info{display:flex;gap:24px;margin-top:8px;font-size:.82rem;color:#555;}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="screen-login">
+  <div class="login-box">
+    <div class="l-logo">
+      <div class="l-ico">👷</div>
+      <h1>نافذة المهندس</h1>
+      <p>رفع التقارير اليومية والأسبوعية</p>
+    </div>
+    <div class="fld">
+      <label>اسمك</label>
+      <input type="text" id="l-name" placeholder="اسمك الكامل...">
+    </div>
+    <div class="fld">
+      <label>المشروع</label>
+      <select id="l-proj"><option value="">اختر المشروع</option></select>
+    </div>
+    <div class="fld" id="l-type-wrap" style="display:none">
+      <label>نوع الأعمال</label>
+      <select id="l-type">
+        <option value="skeleton">🏛️ أعمال العظم والهيكل</option>
+        <option value="finishing">🎨 أعمال التشطيبات</option>
+      </select>
+    </div>
+    <button class="btn-login" onclick="doLogin()">دخول ←</button>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="screen-app">
+  <div class="topbar">
+    <div class="tb-l">
+      <div class="tb-ico">🏗️</div>
+      <span class="tb-title">نظام التقارير</span>
+      <span class="tb-proj" id="tb-proj">—</span>
+      <span class="tb-proj" id="tb-type" style="background:rgba(59,130,246,.1);color:#60a5fa;">—</span>
+    </div>
+    <div class="tb-r">
+      <span class="tb-name" id="tb-name">—</span>
+      <button class="btn-sm btn-adm" onclick="openAdmin()">⚙️ إعدادات</button>
+      <button class="btn-sm btn-out" onclick="doLogout()">خروج</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" id="t-daily" onclick="switchTab('daily')">📋 التقرير اليومي</div>
+    <div class="tab" id="t-weekly" onclick="switchTab('weekly')">📊 التقرير الأسبوعي</div>
+    <div class="tab" id="t-mine" onclick="switchTab('mine');loadMine()">📁 تقاريري</div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ DAILY ══ -->
+    <div class="pane active" id="pane-daily">
+      <div class="print-header">
+        <h1 id="ph-daily-title">التقرير اليومي</h1>
+        <div class="ph-info">
+          <span id="ph-daily-eng"></span>
+          <span id="ph-daily-proj"></span>
+          <span id="ph-daily-date"></span>
+        </div>
+      </div>
+
+      <div class="sec-title">
+        <div class="sec-ico" style="background:rgba(59,130,246,.15)">📋</div>
+        <div><h2>التقرير اليومي</h2><p id="daily-sub">البنود الجارية حالياً والصور</p></div>
+      </div>
+
+      <!-- Dynamic fields container -->
+      <div id="daily-fields-container"></div>
+
+      <!-- Items -->
+      <div class="card" id="daily-items-card">
+        <div class="card-h">
+          <span>🔨 الأعمال الجارية حالياً</span>
+        </div>
+        <div class="card-b">
+          <div style="display:grid;grid-template-columns:1fr 110px 34px;gap:8px;margin-bottom:6px">
+            <span style="font-size:.73rem;color:var(--mut)">اسم البند</span>
+            <span style="font-size:.73rem;color:var(--mut)">الحالة</span><span></span>
+          </div>
+          <div id="daily-items-list"></div>
+          <button class="add-btn" onclick="addDItem()">＋ إضافة بند</button>
+        </div>
+      </div>
+
+      <!-- Photos -->
+      <div class="card" id="daily-photos-card">
+        <div class="card-h">📸 صور من الموقع</div>
+        <div class="card-b">
+          <div class="photo-zone">
+            <input type="file" multiple accept="image/*" id="d-photos" onchange="handlePhotos(event)">
+            <div style="font-size:32px">📷</div>
+            <p>اضغط لإضافة صور</p>
+          </div>
+          <div class="thumbs" id="d-thumbs"></div>
+        </div>
+      </div>
+
+      <div class="sub-bar">
+        <button class="btn btn-ghost" onclick="resetDaily()">مسح</button>
+        <button class="btn btn-ghost" onclick="printReport('daily')">🖨️ طباعة</button>
+        <button class="btn btn-prim" id="d-sub" onclick="submitDaily()">✓ رفع التقرير</button>
+      </div>
+    </div>
+
+    <!-- ══ WEEKLY ══ -->
+    <div class="pane" id="pane-weekly">
+      <div class="print-header">
+        <h1 id="ph-weekly-title">التقرير الأسبوعي</h1>
+        <div class="ph-info">
+          <span id="ph-weekly-eng"></span>
+          <span id="ph-weekly-proj"></span>
+          <span id="ph-weekly-period"></span>
+        </div>
+      </div>
+
+      <div class="sec-title">
+        <div class="sec-ico" style="background:rgba(245,158,11,.15)">📊</div>
+        <div><h2>التقرير الأسبوعي</h2><p>نسب الإنجاز الفعلية</p></div>
+      </div>
+
+      <!-- Info fields -->
+      <div class="card">
+        <div class="card-h">ℹ️ معلومات الأسبوع</div>
+        <div class="card-b">
+          <div class="form-grid">
+            <div class="fg"><label>من تاريخ</label><input type="date" id="w-from"></div>
+            <div class="fg"><label>إلى تاريخ</label><input type="date" id="w-to"></div>
+            <div class="fg"><label>أيام العمل</label><input type="number" id="w-days" min="0" placeholder="6"></div>
+            <div class="fg"><label>متوسط العمال</label><input type="number" id="w-workers" min="0" placeholder="0"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly table -->
+      <div class="card">
+        <div class="card-h">
+          <span>📈 جدول نسب الإنجاز</span>
+          <button class="add-btn" style="margin:0" onclick="addWRow()">＋ إضافة بند</button>
+        </div>
+        <div class="card-b" style="padding:0">
+          <div class="wtable-wrap">
+            <table class="wtable">
+              <thead>
+                <tr>
+                  <th style="width:34px">#</th>
+                  <th>البند / العمل</th>
+                  <th style="width:90px;text-align:center">الإنجاز %</th>
+                  <th style="width:34px"></th>
+                </tr>
+              </thead>
+              <tbody id="w-tbody"></tbody>
+            </table>
+          </div>
+          <!-- Overall % -->
+          <div class="overall-pct">
+            <label>النسبة الكلية للإنجاز:</label>
+            <input type="range" id="w-overall-range" min="0" max="100" value="0" oninput="syncOverall('range')">
+            <input type="number" id="w-overall-num" min="0" max="100" value="0" oninput="syncOverall('num')">
+            <span class="pct-val" id="w-overall-show">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly extra fields -->
+      <div id="weekly-fields-container"></div>
+
+      <div class="sub-bar">
+        <button class="btn btn-ghost" onclick="resetWeekly()">مسح</button>
+        <button class="btn btn-ghost" onclick="printReport('weekly')">🖨️ طباعة</button>
+        <button class="btn btn-prim" id="w-sub" onclick="submitWeekly()">✓ رفع التقرير</button>
+      </div>
+    </div>
+
+    <!-- ══ MY REPORTS ══ -->
+    <div class="pane" id="pane-mine">
+      <div class="sec-title">
+        <div class="sec-ico" style="background:rgba(16,185,129,.15)">📁</div>
+        <div><h2>تقاريري</h2><p>جميع التقارير المرفوعة</p></div>
+      </div>
+      <div id="mine-list"><div class="empty"><div class="ei">📭</div><p>لا توجد تقارير</p></div></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- ══ ADMIN MODAL ══ -->
+<div class="modal-bg" id="adm-modal" onclick="closeAdmOutside(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>⚙️ لوحة الإعدادات</h3>
+      <button class="modal-close" onclick="closeAdm()">✕</button>
+    </div>
+    <!-- Tabs -->
+    <div class="adm-tabs">
+      <div class="adm-tab active" id="at-projects" onclick="admTab('projects')">المشاريع</div>
+      <div class="adm-tab" id="at-daily-fields" onclick="admTab('daily-fields')">حقول اليومي</div>
+      <div class="adm-tab" id="at-weekly-fields" onclick="admTab('weekly-fields')">حقول الأسبوعي</div>
+      <div class="adm-tab" id="at-password" onclick="admTab('password')">كلمة السر</div>
+    </div>
+
+    <!-- Projects -->
+    <div id="adm-projects">
+      <div id="proj-list-adm"></div>
+      <button class="add-btn" style="width:100%;margin-top:6px" onclick="addProjAdmin()">＋ إضافة مشروع جديد</button>
+      <div style="margin-top:14px;display:flex;justify-content:flex-end">
+        <button class="btn btn-prim" onclick="saveProjects()">💾 حفظ المشاريع</button>
+      </div>
+    </div>
+
+    <!-- Daily Fields -->
+    <div id="adm-daily-fields" style="display:none">
+      <p style="font-size:.8rem;color:var(--mut);margin-bottom:12px">تحكم في الحقول الظاهرة في التقرير اليومي — يمكنك إضافة أو حذف أو إخفاء أي حقل</p>
+      <div style="display:grid;grid-template-columns:1fr 100px 80px 34px;gap:8px;margin-bottom:6px">
+        <span style="font-size:.72rem;color:var(--mut)">اسم الحقل</span>
+        <span style="font-size:.72rem;color:var(--mut)">النوع</span>
+        <span style="font-size:.72rem;color:var(--mut);text-align:center">ظاهر؟</span>
+        <span></span>
+      </div>
+      <div id="daily-fields-builder"></div>
+      <button class="add-btn" style="width:100%;margin-top:6px" onclick="addFieldBuilder('daily')">＋ إضافة حقل جديد</button>
+      <div style="margin-top:14px;display:flex;justify-content:flex-end">
+        <button class="btn btn-prim" onclick="saveFields('daily')">💾 حفظ الحقول</button>
+      </div>
+    </div>
+
+    <!-- Weekly Fields -->
+    <div id="adm-weekly-fields" style="display:none">
+      <p style="font-size:.8rem;color:var(--mut);margin-bottom:12px">تحكم في الحقول الإضافية في التقرير الأسبوعي</p>
+      <div style="display:grid;grid-template-columns:1fr 100px 80px 34px;gap:8px;margin-bottom:6px">
+        <span style="font-size:.72rem;color:var(--mut)">اسم الحقل</span>
+        <span style="font-size:.72rem;color:var(--mut)">النوع</span>
+        <span style="font-size:.72rem;color:var(--mut);text-align:center">ظاهر؟</span>
+        <span></span>
+      </div>
+      <div id="weekly-fields-builder"></div>
+      <button class="add-btn" style="width:100%;margin-top:6px" onclick="addFieldBuilder('weekly')">＋ إضافة حقل جديد</button>
+      <div style="margin-top:14px;display:flex;justify-content:flex-end">
+        <button class="btn btn-prim" onclick="saveFields('weekly')">💾 حفظ الحقول</button>
+      </div>
+    </div>
+
+    <!-- Password -->
+    <div id="adm-password" style="display:none">
+      <p style="font-size:.82rem;color:var(--mut);margin-bottom:16px">تغيير كلمة سر الإعدادات</p>
+      <div class="pass-row">
+        <div class="fld"><label>كلمة السر الحالية</label><input type="password" id="p-old" placeholder="••••••"></div>
+        <div class="fld"><label>كلمة السر الجديدة</label><input type="password" id="p-new" placeholder="••••••"></div>
+        <div class="fld"><label>تأكيد الجديدة</label><input type="password" id="p-confirm" placeholder="••••••"></div>
+      </div>
+      <div style="margin-top:12px;display:flex;justify-content:flex-end">
+        <button class="btn btn-prim" onclick="changePassword()">🔐 تغيير كلمة السر</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Password Gate Modal -->
+<div class="modal-bg" id="pass-gate" onclick="">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-head">
+      <h3>🔐 كلمة السر</h3>
+      <button class="modal-close" onclick="document.getElementById('pass-gate').classList.remove('open')">✕</button>
+    </div>
+    <div class="fld"><label>أدخل كلمة سر الإعدادات</label>
+      <input type="password" id="gate-pass" placeholder="••••••" onkeydown="if(event.key==='Enter')checkGate()">
+    </div>
+    <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-ghost" onclick="document.getElementById('pass-gate').classList.remove('open')">إلغاء</button>
+      <button class="btn btn-prim" onclick="checkGate()">دخول</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SURL = 'https://yflppqkscosfnvihxlxe.supabase.co';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbHBwcWtzY29zZm52aWh4bHhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MDQ4ODcsImV4cCI6MjA5NTE4MDg4N30.QJn8DVinmYrNvAXYNScpW1RvXtMZr1lrw2o3ov-LaXw';
+const sb = supabase.createClient(SURL, SKEY);
+
+// ── STATE ──
+let user = null;
+let photoB64 = [];
+
+// ── CONFIG (stored in localStorage) ──
+function loadConfig() {
+  return JSON.parse(localStorage.getItem('eng_config') || 'null') || getDefaultConfig();
+}
+function saveConfig(cfg) { localStorage.setItem('eng_config', JSON.stringify(cfg)); }
+
+function getDefaultConfig() {
+  return {
+    password: 'admin123',
+    projects: [
+      { name: 'فيلا الملك — حي النرجس', workType: 'both' },
+      { name: 'مجمع الوادي السكني', workType: 'skeleton' },
+      { name: 'برج الأعمال — طريق الملك', workType: 'finishing' },
+      { name: 'مشروع الواجهة البحرية', workType: 'both' }
+    ],
+    dailyFields: [
+      { id: 'df1', label: 'التاريخ', type: 'date', visible: true, required: true, fixed: true },
+      { id: 'df2', label: 'حالة الطقس', type: 'weather', visible: true, required: false, fixed: false },
+      { id: 'df3', label: 'عدد العمال', type: 'number', visible: true, required: false, fixed: false },
+      { id: 'df4', label: 'ساعات العمل', type: 'number', visible: true, required: false, fixed: false },
+      { id: 'df5', label: 'ملاحظات ومشاكل', type: 'textarea', visible: true, required: false, fixed: false }
+    ],
+    weeklyFields: [
+      { id: 'wf1', label: 'إنجازات الأسبوع', type: 'textarea', visible: true, required: false, fixed: false },
+      { id: 'wf2', label: 'تحديات ومشاكل', type: 'textarea', visible: true, required: false, fixed: false },
+      { id: 'wf3', label: 'خطة الأسبوع القادم', type: 'textarea', visible: true, required: false, fixed: false }
+    ]
+  };
+}
+
+let cfg = loadConfig();
+
+// ── LOGIN INIT ──
+window.onload = function() {
+  populateLoginProjects();
+};
+
+function populateLoginProjects() {
+  const sel = document.getElementById('l-proj');
+  sel.innerHTML = '<option value="">اختر المشروع</option>';
+  cfg.projects.forEach((p,i) => {
+    sel.innerHTML += `<option value="${i}">${p.name}</option>`;
+  });
+  sel.onchange = function() {
+    const idx = parseInt(this.value);
+    if (isNaN(idx)) { document.getElementById('l-type-wrap').style.display='none'; return; }
+    const wt = cfg.projects[idx].workType;
+    const tw = document.getElementById('l-type-wrap');
+    const ts = document.getElementById('l-type');
+    if (wt === 'both') {
+      tw.style.display = '';
+      ts.innerHTML = '<option value="skeleton">🏛️ أعمال العظم والهيكل</option><option value="finishing">🎨 أعمال التشطيبات</option>';
+    } else {
+      tw.style.display = 'none';
+    }
+  };
+}
+
+function doLogin() {
+  const name = document.getElementById('l-name').value.trim();
+  const pidx = parseInt(document.getElementById('l-proj').value);
+  if (!name) { toast('أدخل اسمك', true); return; }
+  if (isNaN(pidx)) { toast('اختر المشروع', true); return; }
+  const proj = cfg.projects[pidx];
+  let wt = proj.workType;
+  if (wt === 'both') wt = document.getElementById('l-type').value;
+  user = { name, project: proj.name, workType: wt };
+  document.getElementById('screen-login').style.display = 'none';
+  document.getElementById('screen-app').style.display = 'block';
+  document.getElementById('tb-proj').textContent = proj.name;
+  document.getElementById('tb-type').textContent = wt === 'skeleton' ? '🏛️ عظم' : '🎨 تشطيبات';
+  document.getElementById('tb-name').textContent = name;
+  renderDailyFields();
+  renderWeeklyFields();
+  addDItem(); addWRow();
+  document.getElementById('d-date') && (document.getElementById('d-date').value = today());
+}
+
+function doLogout() {
+  user = null;
+  document.getElementById('screen-login').style.display = 'flex';
+  document.getElementById('screen-app').style.display = 'none';
+  populateLoginProjects();
+}
+
+// ── TABS ──
+function switchTab(t) {
+  ['daily','weekly','mine'].forEach(x=>{
+    document.getElementById('pane-'+x).classList.toggle('active',x===t);
+    document.getElementById('t-'+x).classList.toggle('active',x===t);
+  });
+}
+
+// ── RENDER DYNAMIC FIELDS ──
+function renderDailyFields() {
+  const c = document.getElementById('daily-fields-container');
+  c.innerHTML = '';
+  cfg.dailyFields.filter(f=>f.visible).forEach(f=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    let inner = '';
+    if (f.type === 'date') {
+      inner = `<input type="date" id="d-date" class="fg" style="width:100%;background:var(--sur);border:1.5px solid var(--bord);border-radius:8px;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.86rem;padding:9px 12px;outline:none;">`;
+    } else if (f.type === 'weather') {
+      inner = `<select id="d-weather" style="width:100%;background:var(--sur);border:1.5px solid var(--bord);border-radius:8px;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.86rem;padding:9px 12px;outline:none;">
+        <option>☀️ مشمس</option><option>⛅ غائم جزئياً</option><option>🌥️ غائم</option>
+        <option>🌧️ ممطر</option><option>💨 رياح شديدة</option></select>`;
+    } else if (f.type === 'number') {
+      inner = `<input type="number" id="d-${f.id}" min="0" placeholder="0" style="width:100%;background:var(--sur);border:1.5px solid var(--bord);border-radius:8px;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.86rem;padding:9px 12px;outline:none;">`;
+    } else if (f.type === 'textarea') {
+      inner = `<textarea id="d-${f.id}" placeholder="${f.label}..." style="width:100%;background:var(--sur);border:1.5px solid var(--bord);border-radius:8px;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.86rem;padding:9px 12px;outline:none;resize:vertical;min-height:76px;"></textarea>`;
+    } else {
+      inner = `<input type="text" id="d-${f.id}" placeholder="${f.label}..." style="width:100%;background:var(--sur);border:1.5px solid var(--bord);border-radius:8px;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.86rem;padding:9px 12px;outline:none;">`;
+    }
+    card.innerHTML = `<div class="card-h">${f.label}</div><div class="card-b">${inner}</div>`;
+    c.appendChild(card);
+    if (f.type === 'date' && document.getElementById('d-date')) {
+      document.getElementById('d-date').value = today();
+    }
+  });
+}
+
+function renderWeeklyFields() {
+  const c = document.getElementById('weekly-fields-container');
+  c.innerHTML = '';
+  cfg.weeklyFields.filter(f=>f.visible).forEach(f=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    let inner = `<textarea id="w-${f.id}" placeholder="${f.label}..." style="width:100%;background:var(--sur);border:1.5px solid var(--bord);border-radius:8px;color:var(--txt);font-family:'Cairo',sans-serif;font-size:.86rem;padding:9px 12px;outline:none;resize:vertical;min-height:76px;"></textarea>`;
+    card.innerHTML = `<div class="card-h">${f.label}</div><div class="card-b">${inner}</div>`;
+    c.appendChild(card);
+  });
+}
+
+// ── DAILY ITEMS ──
+function addDItem() {
+  const c = document.getElementById('daily-items-list');
+  const d = document.createElement('div');
+  d.className = 'item-row';
+  d.innerHTML = `
+    <input type="text" placeholder="اسم البند / العمل الجاري...">
+    <select><option>جاري ▶️</option><option>مكتمل ✅</option><option>متوقف ⏸️</option></select>
+    <button class="del-btn" onclick="this.parentElement.remove()">✕</button>`;
+  c.appendChild(d);
+}
+
+function getDItems() {
+  return [...document.querySelectorAll('#daily-items-list .item-row')].map(r=>({
+    name: r.querySelector('input').value.trim(),
+    status: r.querySelector('select').value
+  })).filter(i=>i.name);
+}
+
+// ── WEEKLY TABLE ──
+let wRowCount = 0;
+function addWRow(name='', pct=0) {
+  wRowCount++;
+  const tb = document.getElementById('w-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'wr-'+wRowCount;
+  tr.innerHTML = `
+    <td style="color:var(--mut);font-size:.8rem;text-align:center">${tb.children.length+1}</td>
+    <td><input type="text" value="${name}" placeholder="اسم البند..."></td>
+    <td>
+      <div style="display:flex;align-items:center;gap:6px">
+        <input type="number" class="pct-input" min="0" max="100" value="${pct}" oninput="updateRowBar(this)">
+        <span style="font-size:.75rem;color:var(--mut)">%</span>
+      </div>
+      <div class="pct-bar"><div class="pct-fill ${pct>=80?'g':''}" style="width:${pct}%"></div></div>
+    </td>
+    <td><button class="del-btn" onclick="this.closest('tr').remove();reNumberRows()">✕</button></td>`;
+  tb.appendChild(tr);
+}
+
+function updateRowBar(inp) {
+  const v = Math.min(100, Math.max(0, parseInt(inp.value)||0));
+  inp.value = v;
+  const bar = inp.closest('td').querySelector('.pct-fill');
+  bar.style.width = v+'%';
+  bar.className = 'pct-fill'+(v>=80?' g':'');
+}
+
+function reNumberRows() {
+  document.querySelectorAll('#w-tbody tr').forEach((r,i)=>{ r.cells[0].textContent = i+1; });
+}
+
+function syncOverall(src) {
+  let v;
+  if (src==='range') {
+    v = parseInt(document.getElementById('w-overall-range').value)||0;
+    document.getElementById('w-overall-num').value = v;
+  } else {
+    v = Math.min(100, Math.max(0, parseInt(document.getElementById('w-overall-num').value)||0));
+    document.getElementById('w-overall-num').value = v;
+    document.getElementById('w-overall-range').value = v;
+  }
+  document.getElementById('w-overall-show').textContent = v+'%';
+}
+
+function getWItems() {
+  return [...document.querySelectorAll('#w-tbody tr')].map(r=>{
+    const ins = r.querySelectorAll('input');
+    return { name: ins[0].value.trim(), pct: parseInt(ins[1].value)||0 };
+  }).filter(i=>i.name);
+}
+
+// ── PHOTOS ──
+function handlePhotos(e) {
+  photoB64 = [];
+  const thumbs = document.getElementById('d-thumbs');
+  thumbs.innerHTML = '';
+  Array.from(e.target.files).forEach(f=>{
+    const r = new FileReader();
+    r.onload = ev=>{
+      photoB64.push(ev.target.result);
+      const t = document.createElement('div'); t.className='thumb';
+      t.innerHTML = `<img src="${ev.target.result}">`;
+      thumbs.appendChild(t);
+    };
+    r.readAsDataURL(f);
+  });
+}
+
+// ── SUBMIT DAILY ──
+async function submitDaily() {
+  const date = document.getElementById('d-date') ? document.getElementById('d-date').value : today();
+  const items = getDItems();
+  if (!date) { toast('حدد التاريخ',true); return; }
+  if (!items.length) { toast('أضف بند واحد على الأقل',true); return; }
+
+  // collect all visible fields
+  const extraFields = {};
+  cfg.dailyFields.filter(f=>f.visible && !f.fixed && f.type!=='date').forEach(f=>{
+    const el = document.getElementById('d-'+f.id);
+    if (el) extraFields[f.label] = el.value || el.textContent || '';
+  });
+  const weather = document.getElementById('d-weather') ? document.getElementById('d-weather').value : '';
+
+  const btn = document.getElementById('d-sub');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> جاري الرفع...';
+
+  const {error} = await sb.from('daily_reports').insert({
+    engineer_name: user.name,
+    project: user.project,
+    report_date: date,
+    weather,
+    workers_count: parseInt(document.getElementById('d-df3')?.value)||0,
+    work_hours: parseInt(document.getElementById('d-df4')?.value)||8,
+    items,
+    notes: document.getElementById('d-df5')?.value || '',
+    photos_count: photoB64.length,
+    work_type: user.workType
+  });
+
+  btn.disabled=false; btn.innerHTML='✓ رفع التقرير';
+  if (error) { toast('خطأ: '+error.message,true); return; }
+  toast('✅ تم رفع التقرير اليومي!');
+  resetDaily();
+}
+
+// ── SUBMIT WEEKLY ──
+async function submitWeekly() {
+  const from = document.getElementById('w-from').value;
+  const to = document.getElementById('w-to').value;
+  const items = getWItems();
+  const overall = parseInt(document.getElementById('w-overall-num').value)||0;
+
+  if (!from||!to) { toast('حدد فترة الأسبوع',true); return; }
+  if (!items.length) { toast('أضف بند واحد على الأقل',true); return; }
+
+  // collect extra weekly fields
+  const extras = {};
+  cfg.weeklyFields.filter(f=>f.visible).forEach(f=>{
+    const el = document.getElementById('w-'+f.id);
+    if (el) extras[f.label] = el.value||'';
+  });
+
+  const btn = document.getElementById('w-sub');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> جاري الرفع...';
+
+  const {error} = await sb.from('weekly_reports').insert({
+    engineer_name: user.name,
+    project: user.project,
+    week_from: from, week_to: to,
+    work_days: parseInt(document.getElementById('w-days').value)||6,
+    avg_workers: parseInt(document.getElementById('w-workers').value)||0,
+    items,
+    avg_progress: overall,
+    achievements: extras['إنجازات الأسبوع']||'',
+    challenges: extras['تحديات ومشاكل']||'',
+    next_week_plan: extras['خطة الأسبوع القادم']||'',
+    work_type: user.workType
+  });
+
+  btn.disabled=false; btn.innerHTML='✓ رفع التقرير';
+  if (error) { toast('خطأ: '+error.message,true); return; }
+  toast('✅ تم رفع التقرير الأسبوعي!');
+  resetWeekly();
+}
+
+// ── RESET ──
+function resetDaily() {
+  document.getElementById('daily-items-list').innerHTML='';
+  document.getElementById('d-thumbs').innerHTML='';
+  if(document.getElementById('d-photos')) document.getElementById('d-photos').value='';
+  photoB64=[];
+  renderDailyFields();
+  addDItem();
+}
+function resetWeekly() {
+  document.getElementById('w-from').value='';
+  document.getElementById('w-to').value='';
+  document.getElementById('w-days').value='';
+  document.getElementById('w-workers').value='';
+  document.getElementById('w-tbody').innerHTML='';
+  document.getElementById('w-overall-range').value=0;
+  document.getElementById('w-overall-num').value=0;
+  document.getElementById('w-overall-show').textContent='0%';
+  renderWeeklyFields();
+  addWRow();
+}
+
+// ── LOAD MY REPORTS ──
+async function loadMine() {
+  if(!user) return;
+  const el = document.getElementById('mine-list');
+  el.innerHTML='<div class="empty"><div class="ei">⏳</div><p>جاري التحميل...</p></div>';
+  const [{ data: daily },{ data: weekly }] = await Promise.all([
+    sb.from('daily_reports').select('*').eq('engineer_name',user.name).eq('project',user.project).order('created_at',{ascending:false}),
+    sb.from('weekly_reports').select('*').eq('engineer_name',user.name).eq('project',user.project).order('created_at',{ascending:false})
+  ]);
+  const all = [
+    ...(daily||[]).map(r=>({...r,_t:'daily'})),
+    ...(weekly||[]).map(r=>({...r,_t:'weekly'}))
+  ].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  if(!all.length){ el.innerHTML='<div class="empty"><div class="ei">📭</div><p>لا توجد تقارير</p></div>'; return; }
+  el.innerHTML = all.map(r=>`
+    <div class="rep-card">
+      <span class="rep-badge ${r._t==='daily'?'bd':'bw'}">${r._t==='daily'?'📋 يومي':'📊 أسبوعي'}</span>
+      <div class="rep-info">
+        <div class="rt">${r._t==='daily'?fmtDate(r.report_date):fmtDate(r.week_from)+' → '+fmtDate(r.week_to)}</div>
+        <div class="rs">${r._t==='daily'?(r.items||[]).length+' بند · '+r.workers_count+' عامل':(r.items||[]).length+' بند · الإنجاز: '+r.avg_progress+'%'}</div>
+      </div>
+      <button class="rep-del" onclick="delRep('${r._t}','${r.id}')">حذف</button>
+    </div>`).join('');
+}
+
+async function delRep(type,id) {
+  if(!confirm('حذف هذا التقرير؟')) return;
+  await sb.from(type==='daily'?'daily_reports':'weekly_reports').delete().eq('id',id);
+  toast('تم الحذف'); loadMine();
+}
+
+// ── PRINT ──
+function printReport(type) {
+  // fill print header
+  if(type==='daily') {
+    document.getElementById('ph-daily-title').textContent = 'التقرير اليومي — '+user.project;
+    document.getElementById('ph-daily-eng').textContent = 'المهندس: '+user.name;
+    document.getElementById('ph-daily-proj').textContent = 'المشروع: '+user.project;
+    const d = document.getElementById('d-date');
+    document.getElementById('ph-daily-date').textContent = 'التاريخ: '+(d?fmtDate(d.value):'');
+    document.getElementById('pane-daily').classList.add('print-active');
+    document.getElementById('pane-weekly').classList.remove('print-active');
+  } else {
+    document.getElementById('ph-weekly-title').textContent = 'التقرير الأسبوعي — '+user.project;
+    document.getElementById('ph-weekly-eng').textContent = 'المهندس: '+user.name;
+    document.getElementById('ph-weekly-proj').textContent = 'المشروع: '+user.project;
+    const f=document.getElementById('w-from').value, t2=document.getElementById('w-to').value;
+    document.getElementById('ph-weekly-period').textContent = 'الفترة: '+(f?fmtDate(f):'')+(t2?' → '+fmtDate(t2):'');
+    document.getElementById('pane-weekly').classList.add('print-active');
+    document.getElementById('pane-daily').classList.remove('print-active');
+  }
+  window.print();
+}
+
+// ── ADMIN ──
+function openAdmin() {
+  document.getElementById('gate-pass').value='';
+  document.getElementById('pass-gate').classList.add('open');
+}
+function checkGate() {
+  const v = document.getElementById('gate-pass').value;
+  if(v === cfg.password) {
+    document.getElementById('pass-gate').classList.remove('open');
+    openAdminPanel();
+  } else { toast('كلمة السر غلط',true); }
+}
+
+function openAdminPanel() {
+  renderAdmProjects();
+  renderFieldsBuilder('daily');
+  renderFieldsBuilder('weekly');
+  document.getElementById('adm-modal').classList.add('open');
+  admTab('projects');
+}
+function closeAdm() { document.getElementById('adm-modal').classList.remove('open'); }
+function closeAdmOutside(e) { if(e.target===document.getElementById('adm-modal')) closeAdm(); }
+
+function admTab(t) {
+  ['projects','daily-fields','weekly-fields','password'].forEach(x=>{
+    document.getElementById('adm-'+x).style.display = x===t?'':'none';
+    document.getElementById('at-'+x).classList.toggle('active',x===t);
+  });
+}
+
+// Projects admin
+function renderAdmProjects() {
+  const c = document.getElementById('proj-list-adm');
+  c.innerHTML = '';
+  cfg.projects.forEach((p,i)=>{
+    const d = document.createElement('div');
+    d.className = 'proj-adm-card';
+    d.innerHTML = `
+      <div class="proj-adm-top">
+        <input type="text" value="${p.name}" id="pn-${i}" placeholder="اسم المشروع...">
+        <button class="del-btn" onclick="removeProjAdmin(${i})">✕</button>
+      </div>
+      <div style="margin-bottom:6px;font-size:.76rem;color:var(--mut)">نوع الأعمال:</div>
+      <div class="work-type-btns">
+        <button class="wt-btn ${p.workType==='skeleton'?'active-s':''}" onclick="setProjType(${i},'skeleton',this)">🏛️ عظم فقط</button>
+        <button class="wt-btn ${p.workType==='finishing'?'active-f':''}" onclick="setProjType(${i},'finishing',this)">🎨 تشطيبات فقط</button>
+        <button class="wt-btn ${p.workType==='both'?'active-b':''}" onclick="setProjType(${i},'both',this)">🔄 الاثنين</button>
+      </div>`;
+    c.appendChild(d);
+  });
+}
+
+function setProjType(idx,type,btn) {
+  cfg.projects[idx].workType = type;
+  btn.closest('.work-type-btns').querySelectorAll('.wt-btn').forEach(b=>{
+    b.className = 'wt-btn';
+    if(b===btn) b.classList.add(type==='skeleton'?'active-s':type==='finishing'?'active-f':'active-b');
+  });
+}
+
+function addProjAdmin() {
+  cfg.projects.push({name:'مشروع جديد',workType:'both'});
+  renderAdmProjects();
+}
+function removeProjAdmin(i) {
+  if(!confirm('حذف هذا المشروع؟')) return;
+  cfg.projects.splice(i,1);
+  renderAdmProjects();
+}
+function saveProjects() {
+  cfg.projects.forEach((p,i)=>{ p.name = document.getElementById('pn-'+i).value.trim()||p.name; });
+  saveConfig(cfg);
+  populateLoginProjects();
+  toast('✅ تم حفظ المشاريع');
+}
+
+// Fields builder
+function renderFieldsBuilder(type) {
+  const fields = type==='daily' ? cfg.dailyFields : cfg.weeklyFields;
+  const c = document.getElementById(type+'-fields-builder');
+  c.innerHTML = '';
+  fields.forEach((f,i)=>{
+    const d = document.createElement('div');
+    d.className = 'field-builder-row';
+    d.innerHTML = `
+      <input type="text" value="${f.label}" id="fl-${type}-${i}" ${f.fixed?'disabled':''} placeholder="اسم الحقل">
+      <select id="ft-${type}-${i}" ${f.fixed?'disabled':''}>
+        <option value="text" ${f.type==='text'?'selected':''}>نص</option>
+        <option value="number" ${f.type==='number'?'selected':''}>رقم</option>
+        <option value="textarea" ${f.type==='textarea'?'selected':''}>نص طويل</option>
+        <option value="date" ${f.type==='date'?'selected':''}>تاريخ</option>
+        <option value="weather" ${f.type==='weather'?'selected':''}>طقس</option>
+      </select>
+      <button class="toggle-btn ${f.visible?'toggle-on':'toggle-off'}" id="fv-${type}-${i}"
+        onclick="toggleFieldVisible('${type}',${i})">${f.visible?'ظاهر':'مخفي'}</button>
+      <button class="del-btn" onclick="removeField('${type}',${i})" ${f.fixed?'disabled style="opacity:.3"':'}>✕</button>`;
+    c.appendChild(d);
+  });
+}
+
+function toggleFieldVisible(type,i) {
+  const fields = type==='daily' ? cfg.dailyFields : cfg.weeklyFields;
+  fields[i].visible = !fields[i].visible;
+  const btn = document.getElementById('fv-'+type+'-'+i);
+  btn.textContent = fields[i].visible?'ظاهر':'مخفي';
+  btn.className = 'toggle-btn '+(fields[i].visible?'toggle-on':'toggle-off');
+}
+
+function addFieldBuilder(type) {
+  const fields = type==='daily' ? cfg.dailyFields : cfg.weeklyFields;
+  fields.push({id:'cf'+Date.now(),label:'حقل جديد',type:'text',visible:true,required:false,fixed:false});
+  renderFieldsBuilder(type);
+}
+
+function removeField(type,i) {
+  const fields = type==='daily' ? cfg.dailyFields : cfg.weeklyFields;
+  if(fields[i].fixed){toast('هذا الحقل أساسي ولا يمكن حذفه',true);return;}
+  if(!confirm('حذف هذا الحقل؟'))return;
+  fields.splice(i,1);
+  renderFieldsBuilder(type);
+}
+
+function saveFields(type) {
+  const fields = type==='daily' ? cfg.dailyFields : cfg.weeklyFields;
+  fields.forEach((f,i)=>{
+    const lbl = document.getElementById('fl-'+type+'-'+i);
+    const tp = document.getElementById('ft-'+type+'-'+i);
+    if(lbl && !f.fixed) f.label = lbl.value||f.label;
+    if(tp && !f.fixed) f.type = tp.value;
+  });
+  saveConfig(cfg);
+  if(type==='daily') renderDailyFields();
+  else renderWeeklyFields();
+  toast('✅ تم حفظ الحقول');
+}
+
+function changePassword() {
+  const old = document.getElementById('p-old').value;
+  const nw = document.getElementById('p-new').value;
+  const cf2 = document.getElementById('p-confirm').value;
+  if(old !== cfg.password){toast('كلمة السر الحالية غلط',true);return;}
+  if(!nw){toast('أدخل كلمة السر الجديدة',true);return;}
+  if(nw !== cf2){toast('كلمة السر الجديدة غير متطابقة',true);return;}
+  cfg.password = nw;
+  saveConfig(cfg);
+  document.getElementById('p-old').value='';
+  document.getElementById('p-new').value='';
+  document.getElementById('p-confirm').value='';
+  toast('✅ تم تغيير كلمة السر');
+}
+
+// ── UTILS ──
+function today(){ return new Date().toISOString().split('T')[0]; }
+function fmtDate(d){
+  if(!d) return '—';
+  return new Date(d+'T00:00:00').toLocaleDateString('ar-SA',{year:'numeric',month:'short',day:'numeric'});
+}
+function toast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast'+(err?' err':'');
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>

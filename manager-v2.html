@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نافذة المدير v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#080f1a;--sur:#0e1c2e;--card:#132538;--bord:rgba(255,255,255,.07);
+  --acc:#f59e0b;--acc2:#fbbf24;--blue:#3b82f6;--green:#10b981;--red:#ef4444;--orange:#f97316;
+  --skel:#1a3a5c;--skel2:#4da6ff;--fin:#1a3a2a;--fin2:#4ade80;
+  --txt:#ddeeff;--mut:#5a7a99;--r:13px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;}
+
+.topbar{height:62px;background:var(--sur);border-bottom:1px solid var(--bord);display:flex;
+  align-items:center;justify-content:space-between;padding:0 26px;position:sticky;top:0;z-index:50;}
+.tb-l{display:flex;align-items:center;gap:12px;}
+.tb-ico{width:38px;height:38px;background:linear-gradient(135deg,#f59e0b,#fbbf24);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+.tb-title{font-family:'Tajawal',sans-serif;font-weight:900;font-size:1.05rem;}
+.live{display:flex;align-items:center;gap:5px;font-size:.75rem;color:var(--green);font-weight:700;}
+.live::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.6s ease infinite;display:block;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.35)}}
+.tb-date{font-size:.8rem;color:var(--mut);}
+.btn-pr{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--acc2);
+  border-radius:8px;padding:6px 15px;font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-pr:hover{background:rgba(245,158,11,.2);}
+
+.layout{display:grid;grid-template-columns:210px 1fr;min-height:calc(100vh - 62px);}
+.sidebar{background:var(--sur);border-left:1px solid var(--bord);padding:18px 10px;position:sticky;top:62px;height:calc(100vh - 62px);overflow-y:auto;}
+.nav-sec{font-size:.68rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:1px;padding:0 10px;margin-bottom:7px;margin-top:16px;}
+.nav-sec:first-child{margin-top:0;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:9px;cursor:pointer;
+  font-size:.86rem;font-weight:600;color:var(--mut);transition:all .2s;margin-bottom:2px;}
+.nav-item:hover{background:var(--card);color:var(--txt);}
+.nav-item.active{background:rgba(245,158,11,.12);color:var(--acc2);}
+.nbadge{margin-right:auto;background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:.7rem;font-weight:800;animation:pop .3s ease;}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+
+.main{padding:26px 28px;overflow-y:auto;}
+.view{display:none;} .view.active{display:block;}
+
+.vh{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.vh h2{font-family:'Tajawal',sans-serif;font-size:1.5rem;font-weight:900;}
+.vh p{font-size:.82rem;color:var(--mut);margin-top:3px;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:24px;}
+.stat{background:var(--card);border:1px solid var(--bord);border-radius:var(--r);padding:18px;position:relative;overflow:hidden;transition:transform .2s;}
+.stat:hover{transform:translateY(-2px);}
+.stat::before{content:'';position:absolute;top:0;right:0;width:3px;height:100%;}
+.stat.s1::before{background:var(--acc);}
+.stat.s2::before{background:var(--green);}
+.stat.s3::before{background:var(--skel2);}
+.stat.s4::before{background:var(--fin2);}
+.sv{font-family:'Tajawal',sans-serif;font-size:2rem;font-weight:900;line-height:1;}
+.stat.s1 .sv{color:var(--acc2);}
+.stat.s2 .sv{color:var(--green);}
+.stat.s3 .sv{color:var(--skel2);}
+.stat.s4 .sv{color:var(--fin2);}
+.sl{font-size:.78rem;color:var(--mut);margin-top:4px;}
+.si{position:absolute;bottom:12px;left:12px;font-size:28px;opacity:.1;}
+
+/* CARDS */
+.sc{background:var(--card);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;margin-bottom:20px;}
+.sc-h{padding:14px 20px;border-bottom:1px solid var(--bord);display:flex;align-items:center;justify-content:space-between;}
+.sc-h h3{font-size:.92rem;font-weight:700;display:flex;align-items:center;gap:7px;}
+.filt{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.filt select{background:var(--sur);border:1px solid var(--bord);border-radius:7px;color:var(--txt);
+  font-family:'Cairo',sans-serif;font-size:.78rem;padding:5px 9px;outline:none;}
+
+/* WORK TYPE FILTER TABS */
+.type-tabs{display:flex;gap:6px;margin-bottom:16px;}
+.type-tab{padding:6px 16px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:.8rem;font-weight:700;
+  cursor:pointer;border:1px solid var(--bord);color:var(--mut);background:var(--sur);transition:all .2s;}
+.type-tab.active-all{background:rgba(245,158,11,.12);border-color:var(--acc);color:var(--acc2);}
+.type-tab.active-skel{background:rgba(26,58,92,.4);border-color:var(--skel2);color:var(--skel2);}
+.type-tab.active-fin{background:rgba(26,58,42,.4);border-color:var(--fin2);color:var(--fin2);}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{background:var(--sur);padding:10px 15px;font-size:.74rem;font-weight:700;color:var(--mut);text-align:right;border-bottom:1px solid var(--bord);}
+.tbl td{padding:12px 15px;font-size:.84rem;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(255,255,255,.02);}
+.tbl tr.nr td{animation:nr .7s ease;}
+@keyframes nr{from{background:rgba(16,185,129,.14)}to{background:transparent}}
+
+/* WEEKLY ITEMS TABLE in detail */
+.wi-table{width:100%;border-collapse:collapse;margin-top:4px;}
+.wi-table th{background:rgba(255,255,255,.04);padding:8px 12px;font-size:.74rem;color:var(--mut);text-align:right;border-bottom:1px solid var(--bord);}
+.wi-table td{padding:9px 12px;font-size:.83rem;border-bottom:1px solid rgba(255,255,255,.04);}
+.wi-table tr:last-child td{border-bottom:none;}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.71rem;font-weight:800;}
+.bd{background:rgba(59,130,246,.15);color:#60a5fa;}
+.bw{background:rgba(245,158,11,.15);color:var(--acc2);}
+.bn{background:rgba(16,185,129,.15);color:#34d399;}
+.br{background:rgba(90,122,153,.1);color:var(--mut);}
+.bt-s{background:rgba(26,58,92,.35);color:var(--skel2);}
+.bt-f{background:rgba(26,58,42,.35);color:var(--fin2);}
+.ptag{background:rgba(59,130,246,.1);color:#60a5fa;border-radius:5px;padding:2px 7px;font-size:.74rem;font-weight:700;}
+
+.prog{background:rgba(255,255,255,.07);border-radius:3px;height:5px;min-width:90px;}
+.pb{height:5px;border-radius:3px;background:var(--acc);transition:width .5s;}
+.pb.g{background:var(--green);}
+.plbl{font-size:.7rem;color:var(--mut);margin-top:2px;}
+
+/* PANEL */
+.panel-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:center;justify-content:center;padding:18px;}
+.panel-bg.open{display:flex;}
+.panel{background:var(--card);border:1px solid var(--bord);border-radius:18px;width:100%;max-width:680px;max-height:88vh;overflow-y:auto;padding:28px;}
+.panel-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:13px;border-bottom:1px solid var(--bord);}
+.panel-h h3{font-size:1.1rem;font-weight:800;}
+.pc{width:30px;height:30px;background:var(--sur);border:none;border-radius:7px;color:var(--mut);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;}
+.pc:hover{color:var(--txt);}
+.ps{margin-bottom:18px;}
+.ps h4{font-size:.75rem;font-weight:800;color:var(--acc2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px;}
+.dr{display:flex;align-items:baseline;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.dr:last-child{border-bottom:none;}
+.dl{font-size:.78rem;color:var(--mut);min-width:120px;}
+.dv{font-size:.86rem;font-weight:600;}
+
+/* NOTIF */
+.ni{display:flex;align-items:flex-start;gap:11px;padding:13px 20px;border-bottom:1px solid var(--bord);cursor:pointer;transition:background .2s;}
+.ni:hover{background:rgba(255,255,255,.025);}
+.ni.unread{background:rgba(16,185,129,.04);}
+.ni-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.ni-d{background:rgba(59,130,246,.15);}
+.ni-w{background:rgba(245,158,11,.15);}
+.nb{flex:1;}
+.nb .nt{font-size:.86rem;font-weight:700;}
+.nb .ns{font-size:.76rem;color:var(--mut);margin-top:1px;}
+.nb .ntm{font-size:.7rem;color:var(--mut);margin-top:3px;}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--green);color:#fff;padding:11px 24px;border-radius:11px;font-weight:700;
+  font-size:.88rem;box-shadow:0 6px 24px rgba(0,0,0,.5);z-index:999;transition:transform .3s ease;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+.empty{text-align:center;padding:48px 16px;color:var(--mut);}
+.empty .ei{font-size:44px;opacity:.32;margin-bottom:8px;}
+
+/* PRINT */
+@media print{
+  @page{size:A4;margin:14mm;}
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  body{background:white !important;color:#1a1a2e !important;}
+  .topbar,.sidebar,.panel-bg,.toast,.sc-h .btn-pr,.filt,.type-tabs{display:none !important;}
+  .layout{grid-template-columns:1fr !important;}
+  .stat{background:#f5f5f5 !important;border:1px solid #ddd !important;}
+  .sv{color:#1a1a2e !important;} .sl{color:#666 !important;}
+  .sc{background:white !important;border:1px solid #ddd !important;}
+  .sc-h{background:#f0f0f0 !important;}
+  .tbl th{background:#eee !important;color:#555 !important;}
+  .tbl td{color:#1a1a2e !important;}
+  .wi-table th{background:#f5f5f5 !important;color:#555 !important;}
+  .wi-table td{color:#1a1a2e !important;}
+  .prog{background:#e0e0e0 !important;}
+  .view{display:block !important;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-l">
+    <div class="tb-ico">📊</div>
+    <span class="tb-title">نافذة المدير</span>
+    <span class="live">مباشر</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="tb-date" id="tb-date"></span>
+    <button class="btn-pr" onclick="window.print()">🖨️ طباعة</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="nav-sec">القائمة</div>
+    <div class="nav-item active" id="nav-dash" onclick="sv('dash')"><span>🏠</span> لوحة التحكم</div>
+    <div class="nav-item" id="nav-daily" onclick="sv('daily')"><span>📋</span> يومية <span class="nbadge" id="b-daily" style="display:none">0</span></div>
+    <div class="nav-item" id="nav-weekly" onclick="sv('weekly')"><span>📊</span> أسبوعية <span class="nbadge" id="b-weekly" style="display:none">0</span></div>
+    <div class="nav-item" id="nav-notif" onclick="sv('notif')"><span>🔔</span> إشعارات <span class="nbadge" id="b-notif" style="display:none">0</span></div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dash">
+      <div class="vh">
+        <div><h2>لوحة التحكم</h2><p>متابعة جميع التقارير الواردة</p></div>
+      </div>
+      <div class="stats">
+        <div class="stat s1"><div class="sv" id="s-total">0</div><div class="sl">إجمالي التقارير</div><div class="si">📁</div></div>
+        <div class="stat s2"><div class="sv" id="s-today">0</div><div class="sl">تقارير اليوم</div><div class="si">📋</div></div>
+        <div class="stat s3"><div class="sv" id="s-skel">0</div><div class="sl">🏛️ أعمال عظم</div><div class="si">🏗️</div></div>
+        <div class="stat s4"><div class="sv" id="s-fin">0</div><div class="sl">🎨 تشطيبات</div><div class="si">🎨</div></div>
+      </div>
+      <div class="sc">
+        <div class="sc-h"><h3>⚡ آخر التقارير الواردة</h3></div>
+        <table class="tbl"><thead><tr><th>النوع</th><th>نوع الأعمال</th><th>المهندس</th><th>المشروع</th><th>التاريخ</th><th>عرض</th></tr></thead>
+        <tbody id="d-latest"></tbody></table>
+      </div>
+      <div class="sc">
+        <div class="sc-h"><h3>📊 ملخص المشاريع — آخر إنجاز أسبوعي</h3></div>
+        <table class="tbl"><thead><tr><th>المشروع</th><th>المهندس</th><th>نوع الأعمال</th><th>الأسبوع</th><th>الإنجاز الكلي</th></tr></thead>
+        <tbody id="d-projs"></tbody></table>
+      </div>
+    </div>
+
+    <!-- DAILY -->
+    <div class="view" id="view-daily">
+      <div class="vh">
+        <div><h2>📋 التقارير اليومية</h2><p>جميع التقارير اليومية المرفوعة</p></div>
+        <div class="filt">
+          <select id="f-d-proj" onchange="renderDaily()"><option value="">كل المشاريع</option></select>
+          <select id="f-d-type" onchange="renderDaily()"><option value="">كل الأعمال</option><option value="skeleton">🏛️ عظم</option><option value="finishing">🎨 تشطيبات</option></select>
+        </div>
+      </div>
+      <div class="sc">
+        <table class="tbl">
+          <thead><tr><th>المهندس</th><th>نوع الأعمال</th><th>المشروع</th><th>التاريخ</th><th>الطقس</th><th>العمال</th><th>البنود</th><th>الصور</th><th>عرض</th></tr></thead>
+          <tbody id="daily-tb"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- WEEKLY -->
+    <div class="view" id="view-weekly">
+      <div class="vh">
+        <div><h2>📊 التقارير الأسبوعية</h2><p>جدول نسب الإنجاز الفعلية</p></div>
+        <div class="filt">
+          <select id="f-w-proj" onchange="renderWeekly()"><option value="">كل المشاريع</option></select>
+          <select id="f-w-type" onchange="renderWeekly()"><option value="">كل الأعمال</option><option value="skeleton">🏛️ عظم</option><option value="finishing">🎨 تشطيبات</option></select>
+        </div>
+      </div>
+      <div class="sc">
+        <table class="tbl">
+          <thead><tr><th>المهندس</th><th>نوع الأعمال</th><th>المشروع</th><th>الأسبوع</th><th>الإنجاز الكلي</th><th>عرض الجدول</th></tr></thead>
+          <tbody id="weekly-tb"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- NOTIF -->
+    <div class="view" id="view-notif">
+      <div class="vh">
+        <div><h2>🔔 الإشعارات</h2><p>جميع التقارير مرتبة بالوقت</p></div>
+        <button onclick="markAllRead()" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--acc2);border-radius:8px;padding:6px 15px;font-family:'Cairo',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer">✓ تحديد الكل مقروء</button>
+      </div>
+      <div class="sc"><div id="notif-list"></div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="panel-bg" id="panel-bg" onclick="closePO(event)">
+  <div class="panel">
+    <div class="panel-h">
+      <h3 id="p-title">تفاصيل التقرير</h3>
+      <button class="pc" onclick="closeP()">✕</button>
+    </div>
+    <div id="p-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SURL='https://yflppqkscosfnvihxlxe.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbHBwcWtzY29zZm52aWh4bHhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MDQ4ODcsImV4cCI6MjA5NTE4MDg4N30.QJn8DVinmYrNvAXYNScpW1RvXtMZr1lrw2o3ov-LaXw';
+const sb=supabase.createClient(SURL,SKEY);
+
+let aD=[],aW=[];
+let readIds=new Set(JSON.parse(localStorage.getItem('mgr_read2')||'[]'));
+
+async function init(){
+  document.getElementById('tb-date').textContent=new Date().toLocaleDateString('ar-SA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  await loadAll();
+  subscribeRT();
+}
+
+async function loadAll(){
+  const [r1,r2]=await Promise.all([
+    sb.from('daily_reports').select('*').order('created_at',{ascending:false}),
+    sb.from('weekly_reports').select('*').order('created_at',{ascending:false})
+  ]);
+  aD=r1.data||[]; aW=r2.data||[];
+  refresh();
+  populateFilters();
+}
+
+function refresh(){
+  updateStats(); renderDashLatest(); renderDashProjects();
+  renderDaily(); renderWeekly(); buildNotif(); updateBadges();
+}
+
+function subscribeRT(){
+  sb.channel('mgr-ch2')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'daily_reports'},p=>{
+      aD.unshift(p.new); refresh();
+      toast('📋 تقرير يومي جديد — '+p.new.engineer_name+' ('+wtLabel(p.new.work_type)+')');
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'weekly_reports'},p=>{
+      aW.unshift(p.new); refresh();
+      toast('📊 تقرير أسبوعي جديد — '+p.new.engineer_name+' ('+wtLabel(p.new.work_type)+')');
+    })
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'daily_reports'},p=>{
+      aD=aD.filter(r=>r.id!==p.old.id); refresh();
+    })
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'weekly_reports'},p=>{
+      aW=aW.filter(r=>r.id!==p.old.id); refresh();
+    })
+    .subscribe();
+}
+
+function populateFilters(){
+  const projs=[...new Set([...aD,...aW].map(r=>r.project))];
+  ['f-d-proj','f-w-proj'].forEach(id=>{
+    const s=document.getElementById(id);
+    s.innerHTML='<option value="">كل المشاريع</option>'+projs.map(p=>`<option>${p}</option>`).join('');
+  });
+}
+
+function updateStats(){
+  const today=new Date().toISOString().split('T')[0];
+  const td=aD.filter(r=>r.report_date===today).length+aW.filter(r=>r.week_from===today).length;
+  const sk=[...aD,...aW].filter(r=>r.work_type==='skeleton').length;
+  const fi=[...aD,...aW].filter(r=>r.work_type==='finishing').length;
+  document.getElementById('s-total').textContent=aD.length+aW.length;
+  document.getElementById('s-today').textContent=td;
+  document.getElementById('s-skel').textContent=sk;
+  document.getElementById('s-fin').textContent=fi;
+}
+
+function updateBadges(){
+  const ud=aD.filter(r=>!readIds.has(r.id)).length;
+  const uw=aW.filter(r=>!readIds.has(r.id)).length;
+  setBadge('b-daily',ud); setBadge('b-weekly',uw); setBadge('b-notif',ud+uw);
+}
+function setBadge(id,n){const e=document.getElementById(id);if(n>0){e.textContent=n;e.style.display='';}else e.style.display='none';}
+
+// DASHBOARD
+function renderDashLatest(){
+  const all=[...aD.map(r=>({...r,_t:'daily'})),...aW.map(r=>({...r,_t:'weekly'}))]
+    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,10);
+  const tb=document.getElementById('d-latest');
+  if(!all.length){tb.innerHTML='<tr><td colspan="6"><div class="empty"><div class="ei">📭</div><p>لا توجد تقارير</p></div></td></tr>';return;}
+  tb.innerHTML=all.map(r=>`<tr class="${!readIds.has(r.id)?'nr':''}">
+    <td><span class="badge ${r._t==='daily'?'bd':'bw'}">${r._t==='daily'?'📋 يومي':'📊 أسبوعي'}</span></td>
+    <td>${wtBadge(r.work_type)}</td>
+    <td><strong>${r.engineer_name}</strong></td>
+    <td><span class="ptag">${r.project}</span></td>
+    <td>${r._t==='daily'?fmtDate(r.report_date):fmtDate(r.week_from)+' → '+fmtDate(r.week_to)}</td>
+    <td><button onclick="openRep('${r._t}','${r.id}')" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--acc2);border-radius:6px;padding:4px 11px;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer">عرض</button></td>
+  </tr>`).join('');
+}
+
+function renderDashProjects(){
+  const projs=[...new Set(aW.map(r=>r.project))];
+  const tb=document.getElementById('d-projs');
+  if(!projs.length){tb.innerHTML='<tr><td colspan="5"><div class="empty"><div class="ei">📊</div><p>لا توجد تقارير أسبوعية</p></div></td></tr>';return;}
+  tb.innerHTML=projs.map(proj=>{
+    const latest=aW.find(r=>r.project===proj);
+    if(!latest)return'';
+    const pct=latest.avg_progress||0;
+    return`<tr>
+      <td><span class="ptag">${proj}</span></td>
+      <td><strong>${latest.engineer_name}</strong></td>
+      <td>${wtBadge(latest.work_type)}</td>
+      <td>${fmtDate(latest.week_from)} → ${fmtDate(latest.week_to)}</td>
+      <td style="min-width:150px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1"><div class="prog"><div class="pb ${pct>=80?'g':''}" style="width:${pct}%"></div></div></div>
+          <span style="font-size:.82rem;font-weight:800;color:var(--acc2)">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderDaily(){
+  const fp=document.getElementById('f-d-proj').value;
+  const ft=document.getElementById('f-d-type').value;
+  let data=aD;
+  if(fp)data=data.filter(r=>r.project===fp);
+  if(ft)data=data.filter(r=>r.work_type===ft);
+  const tb=document.getElementById('daily-tb');
+  if(!data.length){tb.innerHTML='<tr><td colspan="9"><div class="empty"><div class="ei">📭</div><p>لا توجد تقارير</p></div></td></tr>';return;}
+  tb.innerHTML=data.map(r=>`<tr class="${!readIds.has(r.id)?'nr':''}">
+    <td><strong>${r.engineer_name}</strong>${!readIds.has(r.id)?'<span class="badge bn" style="margin-right:6px">جديد</span>':''}</td>
+    <td>${wtBadge(r.work_type)}</td>
+    <td><span class="ptag">${r.project}</span></td>
+    <td>${fmtDate(r.report_date)}</td>
+    <td>${r.weather||'—'}</td>
+    <td>${r.workers_count||0}</td>
+    <td>${(r.items||[]).length}</td>
+    <td>${r.photos_count||0}📷</td>
+    <td><button onclick="openRep('daily','${r.id}')" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#60a5fa;border-radius:6px;padding:4px 11px;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer">عرض</button></td>
+  </tr>`).join('');
+}
+
+function renderWeekly(){
+  const fp=document.getElementById('f-w-proj').value;
+  const ft=document.getElementById('f-w-type').value;
+  let data=aW;
+  if(fp)data=data.filter(r=>r.project===fp);
+  if(ft)data=data.filter(r=>r.work_type===ft);
+  const tb=document.getElementById('weekly-tb');
+  if(!data.length){tb.innerHTML='<tr><td colspan="6"><div class="empty"><div class="ei">📊</div><p>لا توجد تقارير</p></div></td></tr>';return;}
+  tb.innerHTML=data.map(r=>{
+    const pct=r.avg_progress||0;
+    return`<tr class="${!readIds.has(r.id)?'nr':''}">
+      <td><strong>${r.engineer_name}</strong>${!readIds.has(r.id)?'<span class="badge bn" style="margin-right:6px">جديد</span>':''}</td>
+      <td>${wtBadge(r.work_type)}</td>
+      <td><span class="ptag">${r.project}</span></td>
+      <td>${fmtDate(r.week_from)} → ${fmtDate(r.week_to)}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:100px"><div class="prog"><div class="pb ${pct>=80?'g':''}" style="width:${pct}%"></div></div></div>
+          <span style="font-size:.82rem;font-weight:800;color:var(--acc2)">${pct}%</span>
+        </div>
+      </td>
+      <td><button onclick="openRep('weekly','${r.id}')" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--acc2);border-radius:6px;padding:4px 11px;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer">عرض الجدول</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function buildNotif(){
+  const all=[...aD.map(r=>({t:'daily',d:r})),...aW.map(r=>({t:'weekly',d:r}))]
+    .sort((a,b)=>new Date(b.d.created_at)-new Date(a.d.created_at));
+  const el=document.getElementById('notif-list');
+  if(!all.length){el.innerHTML='<div class="empty"><div class="ei">🔔</div><p>لا توجد إشعارات</p></div>';return;}
+  el.innerHTML=all.map(n=>{
+    const r=n.d,isNew=!readIds.has(r.id);
+    return`<div class="ni ${isNew?'unread':''}" onclick="openRep('${n.t}','${r.id}')">
+      <div class="ni-ico ${n.t==='daily'?'ni-d':'ni-w'}">${n.t==='daily'?'📋':'📊'}</div>
+      <div class="nb">
+        <div class="nt">${n.t==='daily'?'تقرير يومي':'تقرير أسبوعي'} — ${r.engineer_name} ${wtBadge(r.work_type)}</div>
+        <div class="ns"><span class="ptag">${r.project}</span></div>
+        <div class="ntm">${timeAgo(new Date(r.created_at))}</div>
+      </div>
+      ${isNew?'<span class="badge bn">جديد</span>':''}
+    </div>`;
+  }).join('');
+}
+
+function markAllRead(){
+  aD.forEach(r=>readIds.add(r.id)); aW.forEach(r=>readIds.add(r.id));
+  saveRead(); refresh(); toast('✓ تم تحديد الكل كمقروء');
+}
+
+// OPEN REPORT
+function openRep(type,id){
+  const r=type==='daily'?aD.find(x=>x.id==id):aW.find(x=>x.id==id);
+  if(!r)return;
+  readIds.add(r.id); saveRead(); updateBadges();
+  document.getElementById('p-title').textContent=type==='daily'?'📋 تقرير يومي':'📊 تقرير أسبوعي';
+
+  let h=`<div class="ps"><h4>معلومات عامة</h4>
+    <div class="dr"><span class="dl">المهندس</span><span class="dv">${r.engineer_name}</span></div>
+    <div class="dr"><span class="dl">المشروع</span><span class="dv">${r.project}</span></div>
+    <div class="dr"><span class="dl">نوع الأعمال</span><span class="dv">${wtBadge(r.work_type)}</span></div>`;
+
+  if(type==='daily'){
+    h+=`<div class="dr"><span class="dl">التاريخ</span><span class="dv">${fmtDate(r.report_date)}</span></div>
+    <div class="dr"><span class="dl">الطقس</span><span class="dv">${r.weather||'—'}</span></div>
+    <div class="dr"><span class="dl">العمال</span><span class="dv">${r.workers_count||0}</span></div>
+    <div class="dr"><span class="dl">ساعات العمل</span><span class="dv">${r.work_hours||0} ساعة</span></div>
+    </div>`;
+    if(r.items&&r.items.length){
+      h+=`<div class="ps"><h4>🔨 الأعمال الجارية (${r.items.length} بند)</h4>
+      <table class="wi-table"><thead><tr><th>#</th><th>البند</th><th>الحالة</th></tr></thead><tbody>
+      ${r.items.map((it,i)=>`<tr><td style="color:var(--mut)">${i+1}</td><td>${it.name}</td><td>${it.status}</td></tr>`).join('')}
+      </tbody></table></div>`;
+    }
+    if(r.photos_count>0) h+=`<div class="ps"><h4>📸 الصور</h4><p style="font-size:.84rem;color:var(--mut)">${r.photos_count} صورة مرفوعة</p></div>`;
+    if(r.notes) h+=`<div class="ps"><h4>📝 الملاحظات</h4><p style="font-size:.86rem;line-height:1.7">${r.notes}</p></div>`;
+  } else {
+    const pct=r.avg_progress||0;
+    h+=`<div class="dr"><span class="dl">الأسبوع</span><span class="dv">${fmtDate(r.week_from)} → ${fmtDate(r.week_to)}</span></div>
+    <div class="dr"><span class="dl">أيام العمل</span><span class="dv">${r.work_days||0}</span></div>
+    <div class="dr"><span class="dl">متوسط العمال</span><span class="dv">${r.avg_workers||0}</span></div>
+    <div class="dr"><span class="dl">الإنجاز الكلي</span><span class="dv" style="color:var(--acc2);font-size:1.1rem;font-weight:900">${pct}%</span></div>
+    </div>`;
+    if(r.items&&r.items.length){
+      h+=`<div class="ps"><h4>📈 جدول نسب الإنجاز</h4>
+      <table class="wi-table"><thead><tr><th>#</th><th>البند</th><th style="text-align:center">الإنجاز</th><th style="min-width:120px">الشريط</th></tr></thead><tbody>
+      ${r.items.map((it,i)=>`<tr>
+        <td style="color:var(--mut)">${i+1}</td>
+        <td>${it.name}</td>
+        <td style="text-align:center;font-weight:800;color:${it.pct>=80?'var(--green)':'var(--acc2)'}">${it.pct}%</td>
+        <td><div class="prog"><div class="pb ${it.pct>=80?'g':''}" style="width:${it.pct}%"></div></div></td>
+      </tr>`).join('')}
+      </tbody></table></div>`;
+    }
+    if(r.achievements) h+=`<div class="ps"><h4>✅ الإنجازات</h4><p style="font-size:.86rem;line-height:1.7">${r.achievements}</p></div>`;
+    if(r.challenges) h+=`<div class="ps"><h4>⚠️ التحديات</h4><p style="font-size:.86rem;line-height:1.7">${r.challenges}</p></div>`;
+    if(r.next_week_plan) h+=`<div class="ps"><h4>🗓️ الأسبوع القادم</h4><p style="font-size:.86rem;line-height:1.7">${r.next_week_plan}</p></div>`;
+  }
+
+  document.getElementById('p-body').innerHTML=h;
+  document.getElementById('panel-bg').classList.add('open');
+}
+
+function closeP(){document.getElementById('panel-bg').classList.remove('open');}
+function closePO(e){if(e.target===document.getElementById('panel-bg'))closeP();}
+
+function sv(v){
+  ['dash','daily','weekly','notif'].forEach(x=>{
+    document.getElementById('view-'+x).classList.toggle('active',x===v);
+    document.getElementById('nav-'+x).classList.toggle('active',x===v);
+  });
+}
+
+// UTILS
+function wtLabel(wt){return wt==='skeleton'?'🏛️ عظم':wt==='finishing'?'🎨 تشطيبات':'—';}
+function wtBadge(wt){
+  if(wt==='skeleton') return`<span class="badge bt-s">🏛️ عظم</span>`;
+  if(wt==='finishing') return`<span class="badge bt-f">🎨 تشطيبات</span>`;
+  return'—';
+}
+function fmtDate(d){if(!d)return'—';return new Date(d+'T00:00:00').toLocaleDateString('ar-SA',{year:'numeric',month:'short',day:'numeric'});}
+function timeAgo(date){
+  const diff=Date.now()-date;
+  const mins=Math.floor(diff/60000);
+  if(mins<1)return'الآن'; if(mins<60)return`منذ ${mins} دقيقة`;
+  const hrs=Math.floor(mins/60);
+  if(hrs<24)return`منذ ${hrs} ساعة`;
+  return`منذ ${Math.floor(hrs/24)} يوم`;
+}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.className='toast';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}
+function saveRead(){localStorage.setItem('mgr_read2',JSON.stringify([...readIds]));}
+
+init();
+</script>
+</body>
+</html>
